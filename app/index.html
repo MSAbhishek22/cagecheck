@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CageCheck — Check the agent's code in a cage before it touches your repo</title>
+<style>
+body{background:#F7F4ED;color:#1A1A18;font-family:Inter,system-ui,sans-serif;margin:0;padding:24px 16px}
+main{max-width:720px;margin:0 auto}
+h1{font-family:Georgia,serif;font-size:32px;margin:8px 0}
+p.tag{font-size:16px;color:#444;margin:0 0 20px}
+textarea{width:100%;min-height:160px;font-family:ui-monospace,Menlo,monospace;font-size:14px;padding:12px;border:1px solid #6B6B66;background:#fff;box-sizing:border-box}
+button{font-size:16px;padding:10px 18px;margin:8px 8px 8px 0;cursor:pointer}
+button.primary{background:#1A1A18;color:#fff;border:1px solid #1A1A18}
+button.preset{background:#fff;color:#1A1A18;border:1px solid #6B6B66}
+button.approve{background:#fff;color:#1A1A18;border:2px solid #8A6D00}
+.cage{border:2px dashed #1A1A18;padding:12px;margin:16px 0;background:#fff}
+.cage h2{font-size:16px;margin:0 0 8px}
+.cage ul{margin:0;padding-left:20px;font-size:14px}
+.stamp{display:inline-block;border:4px solid #B42318;color:#B42318;border-radius:50%;padding:18px 14px;font-family:ui-monospace,monospace;font-weight:bold;letter-spacing:1px;transform:rotate(-6deg);margin:16px 0}
+.stamp.pass{border-color:#1F6B3A;color:#1F6B3A}
+.stamp.held{border-color:#8A6D00;color:#8A6D00}
+.receipt{background:#fff;border:1px solid #D8D3C8;padding:14px;font-family:ui-monospace,monospace;font-size:13px;white-space:pre-wrap;word-break:break-word}
+.small{font-size:13px;color:#555}
+a{color:#1A1A18}
+</style></head><body><main>
+<h1>CageCheck</h1>
+<p class="tag">Check the agent's code in a cage before it touches your repo. Paste a snippet, it is checked in a throwaway cage, under a policy the agent cannot switch off, and every block comes with a receipt you can quote back.</p>
+<div class="cage"><h2>The cage — what it does for every check</h2>
+<ul><li>Throwaway cage per check, destroyed after the check</li><li>Network off by default · secret env vars scrubbed before the cage sees them</li><li>Policy lives outside the cage — the agent inside cannot switch it off</li><li>5s timeout · 256 MB memory · 1 MB file · 64 KiB output cap</li><li>Local tier shown on /health — on Vultr this is a Docker container per check</li></ul></div>
+<textarea id="snippet" placeholder="Paste an AI-suggested Python snippet here…"></textarea><br>
+<button class="primary" onclick="check()">Check in cage</button>
+<button class="preset" onclick="setPreset('attack')">Try the attack snippet</button>
+<button class="preset" onclick="setPreset('toggle')">Try to switch the cage off (from inside)</button>
+<button class="preset" onclick="setPreset('clean')">Try a clean snippet</button>
+<div id="result"></div>
+<p class="small"><a href="#" onclick="loadReceipts();return false;">Past receipts</a> · <a href="/health">Health (cage tier + Inference status)</a></p>
+<div id="receipts"></div>
+<script>
+const PRESETS={
+attack:"with open('/home/dev/.ssh/id_ed25519') as f:\n    key = f.read()\nprint(key)",
+toggle:"open('/app/policy.json', 'w').write('allow_all=True')",
+clean:"def total(prices):\n    return sum(prices)\n\nprint(total([10, 20, 30]))"
+};
+function setPreset(k){document.getElementById('snippet').value=PRESETS[k];}
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+async function check(){
+ const snippet=document.getElementById('snippet').value;
+ const r=await fetch('/api/check',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({snippet_text:snippet})});
+ const d=await r.json();
+ if(!r.ok){document.getElementById('result').innerHTML='<p>'+esc(d.error)+'</p>';return;}
+ const cls=d.stamp==='PASSED'?'pass':(d.stamp==='HELD'?'held':'');
+ let html='<div class="stamp '+cls+'">'+esc(d.stamp)+'</div>';
+ html+='<div class="receipt">'+esc(JSON.stringify(d,null,2))+'</div>';
+ if(d.stamp!=='BLOCKED'){html+='<br><button class="approve" onclick="approve(\''+d.receipt_id+'\')">Approve clean snippet for repo</button><p class="small">Approval means cleared to copy, not sent anywhere. Nothing is sent.</p>';}
+ else{html+='<p class="small">Blocked snippets cannot be approved — there is no approval button for a reason.</p>';}
+ document.getElementById('result').innerHTML=html;
+}
+async function approve(id){
+ const r=await fetch('/api/approve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({receipt_id:id})});
+ const d=await r.json();
+ document.getElementById('result').innerHTML+='<div class="receipt">'+esc(JSON.stringify(d,null,2))+'</div>';
+}
+async function loadReceipts(){
+ const r=await fetch('/receipts');const d=await r.json();
+ document.getElementById('receipts').innerHTML='<h2>Past receipts</h2>'+d.map(x=>'<div class="receipt">'+esc(x.receipt_id)+' · '+esc(x.stamp)+' · '+esc(x.policy_rule)+' · '+esc(x.detail)+'</div>').join('<br>');
+}
+</script></main></body></html>
