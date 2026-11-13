@@ -14,6 +14,11 @@
 to you" approval of the strategist selection). No code from the 2 Nov
 Containment Receipt Agent was copied into this repo.
 
+**Current entries:** SafeSpace Hacks (submitted 10 Nov 2026) and GenHacks
+(submitted 12 Nov 2026). **Live demo: https://cagecheck.vercel.app** ·
+Repo: https://github.com/MSAbhishek22/cagecheck ·
+Demo video: https://youtu.be/Co_iF-a4cVU
+
 ## What it does (verified locally, 3 Nov 2026)
 - Paste a Python snippet (or use a preset) → deterministic policy scan
   (before dispatch) → runtime cage run → stamp (PASSED / HELD / BLOCKED)
@@ -73,14 +78,18 @@ boundary.** The real boundary is on Vultr: a throwaway Docker container
 per check (see Dockerfile + VULTR_DEPLOY.md), destroyed after each
 check, with `--cap-drop=ALL --read-only --security-opt=no-new-privileges`,
 non-root user, no Docker socket mount, no `--pid=host`, no
-`--privileged`. Until that VM deploy is verified, this build is a
-**local MVP, not a live demo** — do not submit it as a live demo, and
-do not present local receipts as Vultr receipts.
+`--privileged`. That Vultr VM deploy was never done (Vultr Agent Rush
+closed 9 Nov 2026 with no CageCheck submission). The live demo at
+https://cagecheck.vercel.app runs the same code on Vercel serverless —
+its `/health` honestly reports `cage: serverless-process` — which is
+the same process-level isolation as local, **not** the Docker boundary.
+Do not present local or Vercel receipts as Vultr receipts.
 
 ## What is NOT done (and why)
-- **No Vultr VM deploy, no public demo URL, no public GitHub repo, no
-  demo video recorded from Vultr, no LabLab submission.** All need the
-  user's own accounts and, for the video/URL, a real Vultr VM.
+- **No Vultr VM deploy and no LabLab submission** — the event closed
+  9 Nov 2026 first. A public demo URL, public GitHub repo and demo
+  video DO exist (Vercel deployment, links at the top); the video was
+  recorded from the live Vercel URL, not from a Vultr VM.
 - **No LabLab / Discord / Vultr account created by the assistant.**
   Accounts need the user's own email, password, and legal ticks.
 - **No card added, ever.** Free-only rule: $200 gift code at kickoff
