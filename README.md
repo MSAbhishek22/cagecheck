@@ -1,3 +1,17 @@
+<img width="100%" src="https://capsule-render.vercel.app/api?type=waving&color=0:0d1117,50:1f6feb,100:8957e5&height=190&section=header&text=CageCheck&fontSize=44&fontColor=ffffff&animation=fadeIn&desc=Check%20the%20agent%20code%20in%20a%20cage%20before%20it%20touches%20your%20repo&descSize=16"/>
+
+> **📖 The Story** Coding agents now write code faster than anyone can review it — and their code lands straight in your repo. CageCheck, built for the Vultr Agent Rush, exists for the moment before that landing: the agent's work goes into a cage first, and only what passes gets out.
+>
+> **🎯 The Problem** Unreviewed agent code reaching a real repository is a security and quality hole that grows with every autonomous run.
+>
+> **👥 Who It's For** Developers and teams who run AI coding agents and still want a gate they're in charge of.
+>
+> **🔑 The USP** A deterministic sandbox + policy check on agent-drafted code before it touches your repo — and the same idea ported to QNX in the sister repo [cagecheck-qnx](https://github.com/MSAbhishek22/cagecheck-qnx).
+>
+> **🚀 What's Next** Broader policy packs and tighter checks for more kinds of agent changes.
+
+---
+
 # CageCheck — Check the agent's code in a cage before it touches your repo
 
 > **Storyline:** You paste AI-written code into your repo every day. That code
