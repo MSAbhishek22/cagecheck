@@ -20,9 +20,13 @@ button.approve{background:#fff;color:#1A1A18;border:2px solid #8A6D00}
 .receipt{background:#fff;border:1px solid #D8D3C8;padding:14px;font-family:ui-monospace,monospace;font-size:13px;white-space:pre-wrap;word-break:break-word}
 .small{font-size:13px;color:#555}
 a{color:#1A1A18}
-</style></head><body><main>
+#hero3d{display:block;width:100%;height:260px;background:#fff;border:1px solid #D8D3C8;margin:16px 0 4px}.scroll-cue{display:inline-block;margin:6px 0 4px;color:#1A1A18;font-size:14px}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script></head><body><main>
 <h1>CageCheck</h1>
 <p class="tag">Check the agent's code in a cage before it touches your repo. Paste a snippet, it is checked in a throwaway cage, under a policy the agent cannot switch off, and every block comes with a receipt you can quote back.</p>
+<canvas id="hero3d" aria-label="Three.js 3D cage: a wireframe cage around a code cube, with the policy ring orbiting it. Drag to spin."></canvas>
+<p><a class="scroll-cue" href="#snippet">Scroll to check a snippet &darr;</a></p>
 <div class="cage"><h2>The cage — what it does for every check</h2>
 <ul><li>Throwaway cage per check, destroyed after the check</li><li>Network off by default · secret env vars scrubbed before the cage sees them</li><li>Policy lives outside the cage — the agent inside cannot switch it off</li><li>5s timeout · 256 MB memory · 1 MB file · 64 KiB output cap</li><li>Local tier shown on /health — on Vultr this is a Docker container per check</li></ul></div>
 <textarea id="snippet" placeholder="Paste an AI-suggested Python snippet here…"></textarea><br>
@@ -62,4 +66,73 @@ async function loadReceipts(){
  const r=await fetch('/receipts');const d=await r.json();
  document.getElementById('receipts').innerHTML='<h2>Past receipts</h2>'+d.map(x=>'<div class="receipt">'+esc(x.receipt_id)+' · '+esc(x.stamp)+' · '+esc(x.policy_rule)+' · '+esc(x.detail)+'</div>').join('<br>');
 }
+</script>
+<script>
+(function(){
+var cv=document.getElementById('hero3d');
+if(!cv||!window.THREE){return;}
+var reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+var renderer;
+try{renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});}
+catch(e){return;}
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+var scene=new THREE.Scene();
+var camera=new THREE.PerspectiveCamera(50,2,0.1,100);
+camera.position.set(0,0.4,5.4);
+camera.lookAt(0,0,0);
+var group=new THREE.Group();
+scene.add(group);
+
+var cage=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(2.2,2.2,2.2)),new THREE.LineBasicMaterial({color:0x1a1a18}));
+group.add(cage);
+var inner=new THREE.Mesh(new THREE.BoxGeometry(0.9,0.9,0.9),new THREE.MeshBasicMaterial({color:0xe8a33d}));
+group.add(inner);
+var innerWire=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(0.9,0.9,0.9)),new THREE.LineBasicMaterial({color:0x1a1a18}));
+group.add(innerWire);
+var ring=new THREE.Mesh(new THREE.TorusGeometry(1.9,0.03,8,72),new THREE.MeshBasicMaterial({color:0x1f6b3a}));
+ring.rotation.x=Math.PI/2.4;
+group.add(ring);
+var dotCols=[0x1f6b3a,0x8a6d00,0xb42318];
+for(var i=0;i<3;i++){
+var a=i/3*Math.PI*2;
+var dot=new THREE.Mesh(new THREE.SphereGeometry(0.1,12,12),new THREE.MeshBasicMaterial({color:dotCols[i]}));
+dot.position.set(Math.cos(a)*1.9,Math.sin(a)*0.55,Math.sin(a)*1.9);
+group.add(dot);
+}
+var innerSpin=inner;
+
+function resize(){
+var w=cv.clientWidth||800;
+var h=cv.clientHeight||260;
+renderer.setSize(w,h,false);
+camera.aspect=w/h;
+camera.updateProjectionMatrix();
+}
+window.addEventListener('resize',resize);
+resize();
+var dragging=false,lastX=0,vel=0;
+cv.addEventListener('pointerdown',function(e){dragging=true;lastX=e.clientX;});
+window.addEventListener('pointerup',function(){dragging=false;});
+cv.addEventListener('pointermove',function(e){
+if(!dragging){return;}
+var dx=e.clientX-lastX;
+lastX=e.clientX;
+group.rotation.y+=dx*0.005;
+vel=dx*0.0004;
+});
+var start=Date.now();
+function tick(){
+requestAnimationFrame(tick);
+var t=(Date.now()-start)/1000;
+if(!document.hidden&&!reduced){
+group.rotation.y+=0.0035+vel;
+vel*=0.95;
+innerSpin.rotation.x+=0.008;
+innerSpin.rotation.y+=0.011;
+innerWire.rotation.x+=0.008;
+innerWire.rotation.y+=0.011;}
+renderer.render(scene,camera);
+}
+tick();
+})();
 </script></main></body></html>
